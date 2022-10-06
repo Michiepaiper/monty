@@ -1,38 +1,53 @@
-#include <stdio.h>
-#include <ctype.h>
-#include <stdlib.h>
-#include <string.h>
+#define GLOBALS
 #include "monty.h"
 
 /**
- * push - push element into the stack
- * @stack: stack given by main
- * @line_cnt: amount of lines
- *
- * Return: void
+ * push - function that pushes an element to the stack
+ * @stack: header of the stack
+ * @line_number: number of line in the .m file
+ * Return: nothing
  */
-void push(stack_t **stack, unsigned int line_cnt)
+
+void push(stack_t **stack, unsigned int line_number)
 {
-	char *n = global.argument;
+	stack_t *new, *current;
 
-	if ((is_digit(n)) == 0)
+	if (gbl.num == NULL || is_a_num(gbl.num) == 0)
 	{
-		fprintf(stderr, "L%d: usage: push integer\n", line_cnt);
-		exit(EXIT_FAILURE);
-	}
-
-	if (global.data_struct == 1)
+		dprintf(STDERR_FILENO,
+			"L%d: usage: push integer\n", line_number);
+		free_dlistint(*stack);
+		free(gbl.line);
+		free(gbl.div_line);
+		fclose(gbl.bt_code);
+		exit(EXIT_FAILURE); }
+	new = malloc(sizeof(stack_t));
+	if (new == NULL)
 	{
-		if (!add_node(stack, atoi(global.argument)))
-		{
-			exit(EXIT_FAILURE);
-		}
-	}
-	else
+		dprintf(STDERR_FILENO, "Error: malloc failed\n");
+		free_dlistint(*stack);
+		free(gbl.line);
+		free(gbl.div_line);
+		fclose(gbl.bt_code);
+		exit(EXIT_FAILURE); }
+	new->n = atoi(gbl.num);
+	if (*stack == NULL)
 	{
-		if (!queue_node(stack, atoi(global.argument)))
-		{
-			exit(EXIT_FAILURE);
-		}
-	}
+		new->prev = NULL;
+		new->next = NULL;
+		*stack = new; }
+	else if (gbl.mode == 1)
+	{
+		(*stack)->prev = new;
+		new->prev = NULL;
+		new->next = *stack;
+		*stack = new; }
+	else if (gbl.mode == 0)
+	{
+		current = *stack;
+		while (current->next != NULL)
+			current = current->next;
+		new->next = NULL;
+		new->prev = current;
+		current->next = new; }
 }
